@@ -1,3 +1,8 @@
+// ===== TIỆN ÍCH CHUNG =====
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // ===== ĐIỀU HƯỚNG BƯỚC =====
 function goToStep(step) {
   for (let i = 1; i <= 4; i++) {
@@ -21,10 +26,12 @@ function parseBP(text) {
   return { sbp: parseInt(cleaned), dbp: NaN };
 }
 
-// ===== AI ECG THẬT: GỌI BACKEND FASTAPI TRÊN RENDER =====
+// ===== AI ECG THẬT: GỌI BACKEND FASTAPI TRÊN RENDER (CÓ CHỐNG NGỦ + RETRY) =====
 async function callBackendReal(file) {
   const statusBox = document.getElementById("ecgStatus");
   const summaryBox = document.getElementById("ecgTextSummary");
+
+  const BASE_URL = "https://ecg-ai-backend-9qip.onrender.com";
 
   if (!file) {
     statusBox.textContent = "Chưa có file ECG.";
@@ -32,27 +39,41 @@ async function callBackendReal(file) {
     return;
   }
 
-  statusBox.textContent = "AI đang phân tích ECG (gọi backend)...";
+  statusBox.textContent = "AI đang phân tích ECG...";
   summaryBox.textContent = "Đang gửi ảnh lên máy chủ AI, vui lòng đợi...";
 
   try {
     const formData = new FormData();
     formData.append("file", file);
 
-    // URL backend AI ECG của anh trên Render
-    const response = await fetch(
-      "https://ecg-ai-backend-9qip.onrender.com/api/ecg-analyze",
-      {
-        method: "POST",
-        body: formData,
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error("Backend trả lỗi: " + response.status);
+    // 1) Gọi nhẹ tới / để "đánh thức" Render (chống cold start)
+    try {
+      await fetch(BASE_URL + "/");
+    } catch (wakeErr) {
+      console.warn("Wake-up backend error (bỏ qua được):", wakeErr);
     }
 
-    const data = await response.json();
+    // 2) Hàm thực hiện POST thực sự
+    const doPost = async () => {
+      const response = await fetch(BASE_URL + "/api/ecg-analyze", {
+        method: "POST",
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error("Backend trả lỗi HTTP " + response.status);
+      }
+      return response.json();
+    };
+
+    // 3) Thử lần 1, nếu lỗi thì sleep 1.5s rồi thử lần 2
+    let data;
+    try {
+      data = await doPost();
+    } catch (err1) {
+      console.warn("Lần 1 gọi AI thất bại, thử lại...:", err1);
+      await sleep(1500);
+      data = await doPost();
+    }
 
     const ischemia = !!data.ischemia;
     const dangerousArr = !!data.dangerous_arrhythmia;
@@ -83,23 +104,25 @@ async function callBackendReal(file) {
 
 // ===== XỬ LÝ UPLOAD ẢNH ECG =====
 const ecgFileInput = document.getElementById("ecgFile");
-ecgFileInput.addEventListener("change", async function () {
-  const file = this.files[0];
-  const preview = document.getElementById("ecgPreview");
+if (ecgFileInput) {
+  ecgFileInput.addEventListener("change", async function () {
+    const file = this.files[0];
+    const preview = document.getElementById("ecgPreview");
 
-  if (!file) {
-    preview.textContent = "Chưa có ảnh ECG.";
-    return;
-  }
+    if (!file) {
+      preview.textContent = "Chưa có ảnh ECG.";
+      return;
+    }
 
-  const img = document.createElement("img");
-  img.src = URL.createObjectURL(file);
-  preview.innerHTML = "";
-  preview.appendChild(img);
+    const img = document.createElement("img");
+    img.src = URL.createObjectURL(file);
+    preview.innerHTML = "";
+    preview.appendChild(img);
 
-  // Gọi AI backend thật
-  await callBackendReal(file);
-});
+    // Gọi AI backend thật (đã có chống ngủ + retry)
+    await callBackendReal(file);
+  });
+}
 
 // ===== TẦNG HEAR (FUSION AI) =====
 function calculateHEAR() {
@@ -215,7 +238,6 @@ function calculateAndShowResult() {
   if (symptomLayer.activated) layers.push("AI triệu chứng");
   layers.push("AI HEAR score");
 
-  // Thứ tự ưu tiên:
   if (safety.critical) {
     riskLevel = "Đỏ – Đe doạ tính mạng";
     riskClass = "risk-critical";
@@ -228,7 +250,7 @@ function calculateAndShowResult() {
     recommendation = `
       • Đánh giá và xử trí ABC ngay (đường thở – hô hấp – tuần hoàn).<br>
       • Gọi hỗ trợ cấp cứu nội viện hoặc 115 nếu cần.<br>
-      • Chuẩn bị chuyển tuyến khẩn cấp tới cơ sở có can thiệp tim mạch/hồi sức.<br>
+      • Chuẩn bị chuyển tuyến khẩn cấp tới cơ sở có can thiệp mạch vành/hồi sức.<br>
       • Theo dõi monitor liên tục, oxy, thiết lập đường truyền.<br>
       • ${reasonText}
     `;
