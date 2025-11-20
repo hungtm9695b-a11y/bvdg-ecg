@@ -1,4 +1,4 @@
-// Điều hướng bước
+// ===== ĐIỀU HƯỚNG BƯỚC =====
 function goToStep(step) {
   for (let i = 1; i <= 4; i++) {
     document.getElementById("step" + i).classList.add("hidden");
@@ -10,7 +10,7 @@ function goToStep(step) {
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-// Tách huyết áp SBP/DBP
+// ===== HÀM TÁCH HUYẾT ÁP SBP/DBP =====
 function parseBP(text) {
   if (!text) return { sbp: NaN, dbp: NaN };
   const cleaned = text.replace(/\s+/g, "");
@@ -21,7 +21,7 @@ function parseBP(text) {
   return { sbp: parseInt(cleaned), dbp: NaN };
 }
 
-// AI demo đọc ECG (giả lập backend)
+// ===== AI ECG DEMO (thay cho backend thật) =====
 async function callBackendDemo(file) {
   const statusBox = document.getElementById("ecgStatus");
   const summaryBox = document.getElementById("ecgTextSummary");
@@ -33,27 +33,32 @@ async function callBackendDemo(file) {
   await new Promise((resolve) => setTimeout(resolve, 1200));
 
   const age = parseInt(document.getElementById("patientAge").value) || 50;
-  const rr = parseInt(document.getElementById("rr").value) || 18;
   const hr = parseInt(document.getElementById("hr").value) || 80;
+  const rr = parseInt(document.getElementById("rr").value) || 18;
   const bp = parseBP(document.getElementById("bp").value);
   const sbp = bp.sbp;
 
-  let ischemia = false;
-  let dangerousArr = false;
+  let ischemia = false;       // Thiếu máu cơ tim trên ECG
+  let dangerousArr = false;   // Rối loạn nhịp nguy hiểm
 
-  // Demo: dùng tên file để kích hoạt 1 số trường hợp
-  if (file && file.name.toLowerCase().includes("stemi")) ischemia = true;
-  if (file && file.name.toLowerCase().includes("af")) dangerousArr = true;
+  // 1. Dùng tên file để demo nhanh (STEMI, AF…)
+  if (file) {
+    const name = file.name.toLowerCase();
+    if (name.includes("stemi") || name.includes("ischemia")) ischemia = true;
+    if (name.includes("af") || name.includes("vt") || name.includes("svt")) dangerousArr = true;
+  }
 
-  // Dựa vào sinh tồn để gợi ý thêm
-  if (!isNaN(sbp) && sbp < 90) dangerousArr = true;       // tụt huyết áp
-  if (hr > 150 || hr < 40) dangerousArr = true;           // nhịp rất nhanh/chậm
-  if (age > 70 && hr > 110) ischemia = true;              // người già, mạch nhanh
+  // 2. Thêm chút logic dựa trên sinh tồn (demo)
+  if (!isNaN(sbp) && sbp < 90) dangerousArr = true;   // tụt huyết áp
+  if (hr > 150 || hr < 40) dangerousArr = true;       // nhịp rất nhanh/chậm
+  if (age > 70 && hr > 110) ischemia = true;          // người già, mạch nhanh
 
+  // Gán kết quả “AI ECG” vào hidden input để các tầng khác dùng
   document.getElementById("ecgIschemia").value = ischemia ? "1" : "0";
   document.getElementById("ecgDangerousRhythm").value = dangerousArr ? "1" : "0";
   document.getElementById("ecgOtherAbnormal").value = "0";
 
+  // Tóm tắt ngắn gọn cho bác sĩ
   let summary = `Nhịp ${hr} ck/ph. `;
   if (ischemia) summary += "Có dấu hiệu gợi ý thiếu máu cơ tim. ";
   if (dangerousArr) summary += "Gợi ý rối loạn nhịp nguy hiểm. ";
@@ -63,7 +68,7 @@ async function callBackendDemo(file) {
   summaryBox.textContent = summary;
 }
 
-// Upload ECG
+// ===== XỬ LÝ UPLOAD ẢNH ECG =====
 const ecgFileInput = document.getElementById("ecgFile");
 ecgFileInput.addEventListener("change", async function () {
   const file = this.files[0];
@@ -82,7 +87,7 @@ ecgFileInput.addEventListener("change", async function () {
   await callBackendDemo(file);
 });
 
-// Tính HEAR score (tầng AI HEAR)
+// ===== TẦNG HEAR (FUSION AI) =====
 function calculateHEAR() {
   let H = 0, E = 0, A = 0, R = 0;
 
@@ -109,7 +114,7 @@ function calculateHEAR() {
   return { H, E, A, R, total: H + E + A + R };
 }
 
-// Tầng AI sinh tồn (Safety Layer)
+// ===== TẦNG AI SINH TỒN (SAFETY LAYER) =====
 function computeSafetyFlags() {
   const bp = parseBP(document.getElementById("bp").value);
   const sbp = bp.sbp;
@@ -121,7 +126,7 @@ function computeSafetyFlags() {
   let critical = false;
   let reasons = [];
 
-  // Tri giác
+  // Tri giác xấu
   if (consciousness === "lom" || consciousness === "hon") {
     critical = true;
     reasons.push("Tri giác thay đổi");
@@ -154,7 +159,19 @@ function computeSafetyFlags() {
   return { critical, reasons };
 }
 
-// Phân tích AI đa tầng
+// ===== TẦNG AI TRIỆU CHỨNG (SYMPTOM LAYER) =====
+function computeSymptomLayer() {
+  const checked = Array.from(document.querySelectorAll(".symptom:checked"));
+  const count = checked.length;
+
+  // Đau thắt ngực điển hình nếu có nhiều triệu chứng cổ điển
+  const typical = count >= 4;    // có thể chỉnh tuỳ ý
+  const activated = count >= 3;  // chỉ cần >= 3 là coi như "AI triệu chứng" bật
+
+  return { activated, typical, count };
+}
+
+// ===== PHÂN TÍCH AI ĐA TẦNG =====
 function calculateAndShowResult() {
   // 1. Tầng AI sinh tồn
   const safety = computeSafetyFlags();
@@ -163,7 +180,10 @@ function calculateAndShowResult() {
   const ischemia = document.getElementById("ecgIschemia").value === "1";
   const dangerousArr = document.getElementById("ecgDangerousRhythm").value === "1";
 
-  // 3. Tầng AI HEAR
+  // 3. Tầng AI triệu chứng
+  const symptomLayer = computeSymptomLayer();
+
+  // 4. Tầng HEAR (fusion)
   const { H, E, A, R, total } = calculateHEAR();
 
   let riskLevel = "";
@@ -175,13 +195,14 @@ function calculateAndShowResult() {
   if (safety.critical) layers.push("AI sinh tồn");
   if (dangerousArr) layers.push("AI rối loạn nhịp");
   if (ischemia) layers.push("AI thiếu máu cơ tim");
+  if (symptomLayer.activated) layers.push("AI triệu chứng");
   layers.push("AI HEAR score");
 
   // Thứ tự ưu tiên:
   // 1) Sinh tồn nguy kịch
   // 2) Rối loạn nhịp nguy hiểm
   // 3) Thiếu máu cơ tim trên ECG
-  // 4) Nguy cơ trung bình (HEAR)
+  // 4) Triệu chứng/HEAR nguy cơ trung bình
   // 5) Nguy cơ thấp
   if (safety.critical) {
     riskLevel = "Đỏ – Đe doạ tính mạng";
@@ -221,7 +242,8 @@ function calculateAndShowResult() {
       • Theo dõi sinh tồn, chuẩn bị hồ sơ chuyển tuyến và gọi trước cho tuyến trên.<br>
       • Hạn chế trì hoãn tại tuyến cơ sở, không tự lái xe.
     `;
-  } else if (total >= 3) {
+  } else if (total >= 3 || symptomLayer.activated) {
+    // HEAR điểm cao hoặc triệu chứng rất gợi ý → Vàng
     riskLevel = "Vàng – Nguy cơ trung bình";
     riskClass = "risk-medium";
     title = "Nguy cơ thiếu máu cơ tim trung bình";
@@ -274,7 +296,7 @@ function calculateAndShowResult() {
   goToStep(4);
 }
 
-// RESET HOÀN TOÀN → Quay về bước 1
+// ===== RESET TOÀN BỘ FORM =====
 function resetForm() {
   document.querySelectorAll("input,select").forEach(el => {
     if (el.type === "checkbox") {
