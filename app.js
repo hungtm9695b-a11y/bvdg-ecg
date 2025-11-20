@@ -6,19 +6,23 @@ function sleep(ms) {
 // ===== ĐIỀU HƯỚNG BƯỚC =====
 function goToStep(step) {
   for (let i = 1; i <= 4; i++) {
-    document.getElementById("step" + i).classList.add("hidden");
-    document.getElementById("stepLabel" + i).classList.remove("active");
+    const panel = document.getElementById("step" + i);
+    const label = document.getElementById("stepLabel" + i);
+    if (panel) panel.classList.add("hidden");
+    if (label) label.classList.remove("active");
   }
-  document.getElementById("step" + step).classList.remove("hidden");
-  document.getElementById("stepLabel" + step).classList.add("active");
+  const currentPanel = document.getElementById("step" + step);
+  const currentLabel = document.getElementById("stepLabel" + step);
+  if (currentPanel) currentPanel.classList.remove("hidden");
+  if (currentLabel) currentLabel.classList.add("active");
 
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 // ===== TẦNG AI AN TOÀN (SINH TỒN) =====
 function computeSafetyFlags() {
-  const sbpText = document.getElementById("sbp").value.trim();
-  const dbpText = document.getElementById("dbp").value.trim();
+  const sbpText = document.getElementById("sbp")?.value.trim() || "";
+  const dbpText = document.getElementById("dbp")?.value.trim() || "";
   let sbp = NaN,
     dbp = NaN;
 
@@ -29,14 +33,14 @@ function computeSafetyFlags() {
       dbp = parseInt(parts[1], 10);
     }
   } else {
-    sbp = parseInt(sbpText, 10);
-    dbp = parseInt(dbpText, 10);
+    sbp = parseInt(sbpText || "0", 10);
+    dbp = parseInt(dbpText || "0", 10);
   }
 
-  const hr = parseInt(document.getElementById("hr").value || "0", 10);
-  const spo2 = parseInt(document.getElementById("spo2").value || "0", 10);
-  const mental = document.getElementById("mentalStatus").value;
-  const shockSign = document.getElementById("shockSign").checked;
+  const hr = parseInt(document.getElementById("hr")?.value || "0", 10);
+  const spo2 = parseInt(document.getElementById("spo2")?.value || "0", 10);
+  const mental = document.getElementById("mentalStatus")?.value || "0";
+  const shockSign = document.getElementById("shockSign")?.checked || false;
 
   let unstable = false;
 
@@ -52,15 +56,17 @@ function computeSafetyFlags() {
 // ===== TẦNG AI TRIỆU CHỨNG =====
 function computeSymptomLayer() {
   const typicalChestPain =
-    document.getElementById("symChestExertion").checked &&
-    document.getElementById("symChestPressure").checked &&
-    document.getElementById("symRelievedByRest").checked;
+    (document.getElementById("symChestExertion")?.checked || false) &&
+    (document.getElementById("symChestPressure")?.checked || false) &&
+    (document.getElementById("symRelievedByRest")?.checked || false);
 
   const hasShortness =
-    document.getElementById("symDyspnea").checked ||
-    document.getElementById("symOrthopnea").checked;
+    (document.getElementById("symDyspnea")?.checked || false) ||
+    (document.getElementById("symOrthopnea")?.checked || false);
 
-  const chestPainDuration = document.getElementById("symChestDuration").value;
+  const chestPainDuration =
+    document.getElementById("symChestDuration")?.value || "0";
+
   const riskFactors = [
     "rfHypertension",
     "rfDiabetes",
@@ -69,7 +75,7 @@ function computeSymptomLayer() {
     "rfCadHistory",
   ];
   const riskCount = riskFactors.filter(
-    (id) => document.getElementById(id).checked
+    (id) => document.getElementById(id)?.checked
   ).length;
 
   let layer = "low";
@@ -85,7 +91,7 @@ function computeSymptomLayer() {
   return { layer, riskCount, typicalChestPain, hasShortness };
 }
 
-// ===== PREVIEW ẢNH & GÁN LÊN CANVAS (nếu cần) =====
+// ===== PREVIEW ẢNH ECG =====
 function initImagePreview() {
   const fileInput = document.getElementById("ecgFile");
   const preview = document.getElementById("ecgPreview");
@@ -101,6 +107,8 @@ function initImagePreview() {
 
     const img = document.createElement("img");
     img.src = URL.createObjectURL(file);
+    img.style.maxWidth = "100%";
+    img.style.display = "block";
     preview.innerHTML = "";
     preview.appendChild(img);
 
@@ -108,7 +116,7 @@ function initImagePreview() {
   });
 }
 
-// ===== GỌI BACKEND AI THẬT (OPENAI QUA BACKEND CỦA ANH) =====
+// ===== GỌI BACKEND AI THẬT (OPENAI QUA BACKEND CỦA BÁC SĨ) =====
 async function callBackendReal(file) {
   const statusBox = document.getElementById("ecgStatus");
   const summaryBox = document.getElementById("ecgTextSummary");
@@ -116,85 +124,92 @@ async function callBackendReal(file) {
   const BASE_URL = "https://ecg-ai-backend-1.onrender.com";
 
   if (!file) {
-    statusBox.textContent = "Chưa có file ECG.";
-    summaryBox.textContent = "Vui lòng tải ảnh ECG.";
+    if (statusBox) statusBox.textContent = "Chưa có file ECG.";
+    if (summaryBox) summaryBox.textContent = "Vui lòng tải ảnh ECG.";
     return;
   }
 
-  statusBox.textContent = "AI đang phân tích ECG...";
-  summaryBox.textContent = "Đang gửi ảnh lên máy chủ AI, vui lòng đợi...";
+  if (statusBox) statusBox.textContent = "AI đang phân tích ECG...";
+  if (summaryBox)
+    summaryBox.textContent =
+      "Đang gửi ảnh lên máy chủ AI, vui lòng đợi trong giây lát...";
 
   try {
     const formData = new FormData();
     formData.append("file", file);
 
-    // 1) Gọi nhẹ tới / để "đánh thức" Render (chống cold start)
+    // Đánh thức Render
     try {
       await fetch(BASE_URL + "/");
     } catch (wakeErr) {
       console.warn("Wake-up backend error (bỏ qua được):", wakeErr);
     }
 
-    // 2) Hàm thực hiện POST thực sự
     const doPost = async () => {
       const response = await fetch(BASE_URL + "/api/ecg-openai", {
         method: "POST",
         body: formData,
       });
-      if (!response.ok) {
-        throw new Error("Backend trả lỗi HTTP " + response.status);
-      }
+      if (!response.ok) throw new Error("HTTP " + response.status);
       return response.json();
     };
 
-    // 3) Thử lần 1, nếu lỗi thì sleep 1.5s rồi thử lần 2
     let data;
     try {
       data = await doPost();
     } catch (err1) {
-      console.warn("Lần 1 gọi AI thất bại, thử lại...:", err1);
+      console.warn("Lần 1 gọi AI thất bại, thử lại:", err1);
       await sleep(1500);
       data = await doPost();
     }
 
-    // Chuẩn hoá dữ liệu trả về từ backend (tương thích nhiều dạng)
+    // Chuẩn hoá dữ liệu trả về
     let ischemia = !!data.ischemia;
-    let dangerousArr = !!(data.dangerous_arrhythmia || data.dangerous_arr);
+    let dangerousArr = !!(
+      data.dangerous_arrhythmia ||
+      data.dangerous_arr ||
+      data.dangerous_rhythm
+    );
     let summary =
       data.summary ||
       data.text_summary ||
       (data.ai_result && data.ai_result.summary) ||
-      "AI đã phân tích ECG, nhưng chưa có mô tả chi tiết từ mô hình.";
+      "AI đã phân tích ECG, nhưng chưa có mô tả chi tiết.";
 
     if (data.ai_result) {
       const ai = data.ai_result;
       if (typeof ai.ischemia !== "undefined") ischemia = !!ai.ischemia;
-      if (typeof ai.dangerous_arrhythmia !== "undefined") {
+      if (typeof ai.dangerous_arrhythmia !== "undefined")
         dangerousArr = !!ai.dangerous_arrhythmia;
-      } else if (typeof ai.dangerous_arr !== "undefined") {
+      else if (typeof ai.dangerous_arr !== "undefined")
         dangerousArr = !!ai.dangerous_arr;
-      }
       if (ai.summary) summary = ai.summary;
     }
 
-    // Gán vào hidden input để các tầng AI khác dùng
-    document.getElementById("ecgIschemia").value = ischemia ? "1" : "0";
-    document.getElementById("ecgDangerousRhythm").value = dangerousArr
-      ? "1"
-      : "0";
-    document.getElementById("ecgOtherAbnormal").value = "0";
+    const ischemiaInput = document.getElementById("ecgIschemia");
+    const dangArrInput = document.getElementById("ecgDangerousRhythm");
+    const otherAbnInput = document.getElementById("ecgOtherAbnormal");
 
-    statusBox.textContent = "Đã phân tích xong bằng AI ECG backend.";
-    summaryBox.textContent = summary;
+    if (ischemiaInput) ischemiaInput.value = ischemia ? "1" : "0";
+    if (dangArrInput) dangArrInput.value = dangerousArr ? "1" : "0";
+    if (otherAbnInput) otherAbnInput.value = "0";
+
+    if (statusBox)
+      statusBox.textContent = "Đã phân tích xong bằng AI ECG backend.";
+    if (summaryBox) summaryBox.textContent = summary;
   } catch (error) {
     console.error("Lỗi khi gọi AI backend:", error);
-    statusBox.textContent = "Lỗi khi gọi AI backend.";
-    summaryBox.textContent =
-      "Không gửi được ảnh tới máy chủ AI. Vui lòng kiểm tra kết nối hoặc thử lại sau.";
+    if (statusBox) statusBox.textContent = "Lỗi khi gọi AI backend.";
+    if (summaryBox)
+      summaryBox.textContent =
+        "Không gửi được ảnh tới máy chủ AI. Vui lòng kiểm tra kết nối hoặc thử lại sau.";
 
-    document.getElementById("ecgIschemia").value = "0";
-    document.getElementById("ecgDangerousRhythm").value = "0";
-    document.getElementById("ecgOtherAbnormal").value = "0";
+    const ischemiaInput = document.getElementById("ecgIschemia");
+    const dangArrInput = document.getElementById("ecgDangerousRhythm");
+    const otherAbnInput = document.getElementById("ecgOtherAbnormal");
+    if (ischemiaInput) ischemiaInput.value = "0";
+    if (dangArrInput) dangArrInput.value = "0";
+    if (otherAbnInput) otherAbnInput.value = "0";
   }
 }
 
@@ -205,15 +220,17 @@ function calculateHEAR() {
     A = 0,
     R = 0;
 
-  const symptomCount = document.querySelectorAll(".symptom:checked").length;
+  const symptomCount =
+    document.querySelectorAll(".symptom:checked").length || 0;
   if (symptomCount <= 2) H = 0;
   else if (symptomCount <= 4) H = 1;
   else H = 2;
 
-  const ecgIschemia = document.getElementById("ecgIschemia").value === "1";
+  const ecgIschemia =
+    document.getElementById("ecgIschemia")?.value === "1" || false;
   E = ecgIschemia ? 2 : 0;
 
-  const age = parseInt(document.getElementById("age").value || "0", 10);
+  const age = parseInt(document.getElementById("age")?.value || "0", 10);
   if (age < 45) A = 0;
   else if (age <= 64) A = 1;
   else A = 2;
@@ -226,7 +243,7 @@ function calculateHEAR() {
     "rfCadHistory",
   ];
   const riskCount = riskFactors.filter(
-    (id) => document.getElementById(id).checked
+    (id) => document.getElementById(id)?.checked
   ).length;
 
   if (riskCount === 0) R = 0;
@@ -237,13 +254,14 @@ function calculateHEAR() {
   return { H, E, A, R, total };
 }
 
-// ===== PHÂN TÍCH AI ĐA TẦNG =====
+// ===== PHÂN TÍCH AI ĐA TẦNG & HIỂN THỊ =====
 function calculateAndShowResult() {
   const safety = computeSafetyFlags();
 
-  const ischemia = document.getElementById("ecgIschemia").value === "1";
+  const ischemia =
+    document.getElementById("ecgIschemia")?.value === "1" || false;
   const dangerousArr =
-    document.getElementById("ecgDangerousRhythm").value === "1";
+    document.getElementById("ecgDangerousRhythm")?.value === "1" || false;
 
   const symptomLayer = computeSymptomLayer();
   const { H, E, A, R, total } = calculateHEAR();
@@ -292,30 +310,37 @@ function calculateAndShowResult() {
     symptomLayer,
     total
   );
-  document.getElementById("resultRiskCard").innerHTML = `
-    <div class="risk-card ${riskClass}">
-      <h3>${title}</h3>
-      <p>${riskLevel}</p>
-    </div>
-  `;
+
+  const riskCard = document.getElementById("resultRiskCard");
+  if (riskCard)
+    riskCard.innerHTML = `
+      <div class="risk-card ${riskClass}">
+        <h3>${title}</h3>
+        <p>${riskLevel}</p>
+      </div>
+    `;
 
   const recBox = document.getElementById("recommendationBox");
-  recBox.className = "recommend-box " + riskClass;
-  recBox.innerHTML = recommendation;
+  if (recBox) {
+    recBox.className = "recommend-box " + riskClass;
+    recBox.innerHTML = recommendation;
+  }
 
   const hearDiv = document.getElementById("hearSummary");
-  hearDiv.className = "hear-card";
-  hearDiv.innerHTML = `
-    <h4>HEAR score (tham khảo)</h4>
-    <p>Tổng điểm: ${total} / 8</p>
-    <p>History: ${H} • ECG: ${E} • Age: ${A} • Risk: ${R}</p>
-    <p>HEAR score chỉ mang tính tham khảo, không thay thế phân tầng 4 màu của AI.</p>
-  `;
+  if (hearDiv) {
+    hearDiv.className = "hear-card";
+    hearDiv.innerHTML = `
+      <h4>HEAR score (tham khảo)</h4>
+      <p>Tổng điểm: ${total} / 8</p>
+      <p>History: ${H} • ECG: ${E} • Age: ${A} • Risk: ${R}</p>
+      <p>HEAR score chỉ mang tính tham khảo, không thay thế phân tầng 4 màu của AI.</p>
+    `;
+  }
 
   goToStep(4);
 }
 
-// ===== KHUYẾN CÁO CHỮ VIẾT =====
+// ===== KHUYẾN CÁO CHỮ =====
 function buildRecommendationText(
   safety,
   ischemia,
@@ -368,21 +393,28 @@ function buildRecommendationText(
 
 // ===== RESET FORM =====
 function resetForm() {
-  document.getElementById("triageForm").reset();
+  const form = document.getElementById("triageForm");
+  if (form) form.reset();
 
-  document.getElementById("ecgPreview").innerHTML = "Chưa có ảnh ECG.";
-  document.getElementById("ecgStatus").textContent = "Chưa phân tích.";
-  document.getElementById("ecgTextSummary").textContent = "Chưa có kết luận.";
-
-  document.getElementById("resultRiskCard").innerHTML = "";
-
+  const preview = document.getElementById("ecgPreview");
+  const statusBox = document.getElementById("ecgStatus");
+  const summaryBox = document.getElementById("ecgTextSummary");
+  const riskCard = document.getElementById("resultRiskCard");
   const recBox = document.getElementById("recommendationBox");
-  recBox.className = "recommend-box";
-  recBox.innerHTML = "";
-
   const hearDiv = document.getElementById("hearSummary");
-  hearDiv.className = "hear-card";
-  hearDiv.innerHTML = "";
+
+  if (preview) preview.innerHTML = "Chưa có ảnh ECG.";
+  if (statusBox) statusBox.textContent = "Chưa phân tích.";
+  if (summaryBox) summaryBox.textContent = "Chưa có kết luận.";
+  if (riskCard) riskCard.innerHTML = "";
+  if (recBox) {
+    recBox.className = "recommend-box";
+    recBox.innerHTML = "";
+  }
+  if (hearDiv) {
+    hearDiv.className = "hear-card";
+    hearDiv.innerHTML = "";
+  }
 
   goToStep(1);
 }
@@ -391,16 +423,28 @@ function resetForm() {
 document.addEventListener("DOMContentLoaded", () => {
   initImagePreview();
 
-  document
-    .getElementById("btnToStep2")
-    .addEventListener("click", () => goToStep(2));
-  document
-    .getElementById("btnToStep3")
-    .addEventListener("click", () => goToStep(3));
-  document
-    .getElementById("btnAnalyzeAI")
-    .addEventListener("click", calculateAndShowResult);
-  document
-    .getElementById("btnNewCase")
-    .addEventListener("click", resetForm);
+  const btnToStep2 = document.getElementById("btnToStep2");
+  const btnToStep3 = document.getElementById("btnToStep3");
+  const btnAnalyzeAI = document.getElementById("btnAnalyzeAI");
+  const btnNewCase = document.getElementById("btnNewCase");
+
+  if (btnToStep2)
+    btnToStep2.addEventListener("click", () => {
+      goToStep(2);
+    });
+
+  if (btnToStep3)
+    btnToStep3.addEventListener("click", () => {
+      goToStep(3);
+    });
+
+  if (btnAnalyzeAI)
+    btnAnalyzeAI.addEventListener("click", () => {
+      calculateAndShowResult();
+    });
+
+  if (btnNewCase)
+    btnNewCase.addEventListener("click", () => {
+      resetForm();
+    });
 });
