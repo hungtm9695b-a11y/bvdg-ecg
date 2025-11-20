@@ -22,7 +22,7 @@
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: radial-gradient(circle at top left,#e0ebff,#f5f7fb 40%,#f9fafb);
+      background: radial-gradient(circle at top left,#e0ebff,#f9fafb 40%,#ffffff);
       color: var(--text);
     }
 
@@ -214,6 +214,113 @@
       border-top: 1px solid #e5e7eb;
       background: #f9fafb;
       font-style: italic;
+    }
+
+    /* Tối ưu giao diện trên màn hình điện thoại */
+    @media (max-width: 640px) {
+      header {
+        padding: 10px 12px 6px;
+      }
+      header h1 {
+        font-size: 16px;
+      }
+      header p {
+        font-size: 11px;
+      }
+
+      .container {
+        padding: 0 8px;
+        margin-top: 10px;
+      }
+
+      .card {
+        padding: 14px 12px 12px;
+        border-radius: 14px;
+      }
+
+      h2 {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+      h3 {
+        font-size: 14px;
+      }
+
+      .stepper {
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .step-pill {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+      .step-pill .badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+      }
+
+      .row {
+        flex-direction: column;
+      }
+      .col-2,
+      .col-3 {
+        flex: 1 1 100%;
+        min-width: 100%;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      select {
+        font-size: 13px;
+        padding: 8px 9px;
+      }
+
+      .ai-ecg-panel {
+        padding: 8px 10px;
+      }
+      .ai-ecg-body {
+        font-size: 12px;
+      }
+
+      .result-layout {
+        flex-direction: column;
+        gap: 10px;
+      }
+      .recommend-box,
+      .hear-card {
+        flex: 1 1 100%;
+      }
+
+      .risk-card {
+        padding: 12px 12px;
+      }
+      .risk-card h3 {
+        font-size: 16px;
+      }
+      .risk-card p {
+        font-size: 12px;
+      }
+
+      .buttons {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .buttons button {
+        width: 100%;
+        text-align: center;
+        padding: 9px 14px;
+        font-size: 13px;
+      }
+
+      .scientific-note {
+        font-size: 10px;
+      }
+      .scientific-footer {
+        font-size: 10px;
+        padding: 8px 0 16px;
+      }
     }
   </style>
 </head>
