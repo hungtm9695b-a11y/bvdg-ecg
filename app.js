@@ -166,10 +166,10 @@ function calculateAndShowResult() {
   const hearDiv = document.getElementById("hearSummary");
   hearDiv.className = "hear-card";
   hearDiv.innerHTML = `
-    <h3>HEAR score</h3>
+    <h3>HEAR score ESC 2023</h3>
     <p><b>Tổng điểm: ${total}/8</b></p>
     History: ${H} • ECG: ${E} • Age: ${A} • Risk: ${R}
-    <br><i>Chỉ tham khảo, không thay thế phân tầng 4 màu.</i>
+    
   `;
 
   goToStep(4);
