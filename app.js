@@ -39,7 +39,6 @@ async function callBackendDemo(file) {
 
   let ischemia = false;
   let dangerousArr = false;
-  let otherAbn = false;
 
   if (file && file.name.toLowerCase().includes("stemi")) ischemia = true;
   if (file && file.name.toLowerCase().includes("af")) dangerousArr = true;
@@ -49,7 +48,7 @@ async function callBackendDemo(file) {
 
   document.getElementById("ecgIschemia").value = ischemia ? "1" : "0";
   document.getElementById("ecgDangerousRhythm").value = dangerousArr ? "1" : "0";
-  document.getElementById("ecgOtherAbnormal").value = otherAbn ? "1" : "0";
+  document.getElementById("ecgOtherAbnormal").value = "0";
 
   let summary = `Nhịp ${hr} ck/ph. `;
   if (ischemia) summary += "Có dấu hiệu gợi ý thiếu máu cơ tim. ";
@@ -106,7 +105,6 @@ function calculateHEAR() {
 function calculateAndShowResult() {
   const ischemia = document.getElementById("ecgIschemia").value === "1";
   const dangerousArr = document.getElementById("ecgDangerousRhythm").value === "1";
-  const otherAbn = document.getElementById("ecgOtherAbnormal").value === "1";
 
   const { H, E, A, R, total } = calculateHEAR();
 
@@ -201,16 +199,12 @@ function resetForm() {
   document.getElementById("resultRiskCard").innerHTML = "";
 
   const recBox = document.getElementById("recommendationBox");
-  if (recBox) {
-    recBox.className = "recommend-box";
-    recBox.innerHTML = "";
-  }
+  recBox.className = "recommend-box";
+  recBox.innerHTML = "";
 
   const hearDiv = document.getElementById("hearSummary");
-  if (hearDiv) {
-    hearDiv.className = "hear-card";
-    hearDiv.innerHTML = "";
-  }
+  hearDiv.className = "hear-card";
+  hearDiv.innerHTML = "";
 
   goToStep(1);
 }
