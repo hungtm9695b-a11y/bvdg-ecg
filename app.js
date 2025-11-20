@@ -22,7 +22,6 @@ function parseBP(text) {
 }
 
 // AI demo đọc ECG (giả lập backend)
-// Tầng AI ECG vẫn dùng SBP/HR sơ bộ để gán ischemia / loạn nhịp
 async function callBackendDemo(file) {
   const statusBox = document.getElementById("ecgStatus");
   const summaryBox = document.getElementById("ecgTextSummary");
@@ -30,7 +29,7 @@ async function callBackendDemo(file) {
   statusBox.textContent = "AI đang phân tích ECG (demo)…";
   summaryBox.textContent = "Đang đọc ECG, vui lòng đợi…";
 
-  // Giả lập chờ backend
+  // Giả lập thời gian chờ backend
   await new Promise((resolve) => setTimeout(resolve, 1200));
 
   const age = parseInt(document.getElementById("patientAge").value) || 50;
@@ -46,7 +45,7 @@ async function callBackendDemo(file) {
   if (file && file.name.toLowerCase().includes("stemi")) ischemia = true;
   if (file && file.name.toLowerCase().includes("af")) dangerousArr = true;
 
-  // Thêm chút logic demo dựa vào sinh tồn
+  // Dựa vào sinh tồn để gợi ý thêm
   if (!isNaN(sbp) && sbp < 90) dangerousArr = true;       // tụt huyết áp
   if (hr > 150 || hr < 40) dangerousArr = true;           // nhịp rất nhanh/chậm
   if (age > 70 && hr > 110) ischemia = true;              // người già, mạch nhanh
@@ -64,7 +63,7 @@ async function callBackendDemo(file) {
   summaryBox.textContent = summary;
 }
 
-// Sự kiện upload ECG
+// Upload ECG
 const ecgFileInput = document.getElementById("ecgFile");
 ecgFileInput.addEventListener("change", async function () {
   const file = this.files[0];
@@ -83,7 +82,7 @@ ecgFileInput.addEventListener("change", async function () {
   await callBackendDemo(file);
 });
 
-// Tầng AI HEAR score
+// Tính HEAR score (tầng AI HEAR)
 function calculateHEAR() {
   let H = 0, E = 0, A = 0, R = 0;
 
@@ -161,8 +160,8 @@ function calculateAndShowResult() {
   const safety = computeSafetyFlags();
 
   // 2. Tầng AI ECG
-  const ischemia = document.getElementById("ecgIschemia").value === "1";           // thiếu máu cơ tim
-  const dangerousArr = document.getElementById("ecgDangerousRhythm").value === "1"; // RLN nguy hiểm
+  const ischemia = document.getElementById("ecgIschemia").value === "1";
+  const dangerousArr = document.getElementById("ecgDangerousRhythm").value === "1";
 
   // 3. Tầng AI HEAR
   const { H, E, A, R, total } = calculateHEAR();
@@ -173,17 +172,16 @@ function calculateAndShowResult() {
   let recommendation = "";
   let layers = [];
 
-  // Ghi nhận tầng nào được kích hoạt
   if (safety.critical) layers.push("AI sinh tồn");
   if (dangerousArr) layers.push("AI rối loạn nhịp");
   if (ischemia) layers.push("AI thiếu máu cơ tim");
   layers.push("AI HEAR score");
 
-  // Ưu tiên mức độ:
+  // Thứ tự ưu tiên:
   // 1) Sinh tồn nguy kịch
   // 2) Rối loạn nhịp nguy hiểm
   // 3) Thiếu máu cơ tim trên ECG
-  // 4) Nguy cơ trung bình theo HEAR
+  // 4) Nguy cơ trung bình (HEAR)
   // 5) Nguy cơ thấp
   if (safety.critical) {
     riskLevel = "Đỏ – Đe doạ tính mạng";
@@ -208,7 +206,7 @@ function calculateAndShowResult() {
 
     recommendation = `
       • Theo dõi sát tại cơ sở nếu điều kiện cho phép (monitor, oxy).<br>
-      • Xử trí theo phác đồ rối loạn nhịp (nhanh/chậm) nếu đã được huấn luyện.<br>
+      • Xử trí theo phác đồ rối loạn nhịp nhanh/chậm nếu đã được huấn luyện.<br>
       • Cân nhắc chuyển tuyến sớm đến đơn vị có điện tim liên tục và can thiệp chuyên sâu.<br>
       • Cảnh giác dấu hiệu tụt huyết áp, đau ngực, khó thở, suy tim.
     `;
