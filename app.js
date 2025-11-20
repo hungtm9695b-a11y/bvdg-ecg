@@ -169,7 +169,6 @@ function calculateAndShowResult() {
     <h3>HEAR score ESC 2023</h3>
     <p><b>Tổng điểm: ${total}/8</b></p>
     History: ${H} • ECG: ${E} • Age: ${A} • Risk: ${R}
-    
   `;
 
   goToStep(4);
