@@ -7,23 +7,6 @@
   <script defer src="app.js"></script>
 
   <style>
-    .scientific-note {
-  font-size: 11px;
-  color: #6b7280;
-  margin-bottom: 10px;
-  font-style: italic;
-}
-
-.scientific-footer {
-  margin-top: 30px;
-  font-size: 11px;
-  text-align: center;
-  color: #6b7280;
-  padding: 10px 0;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
-  font-style: italic;
-}
     :root {
       --primary: #1f4fbf;
       --bg: #f5f7fb;
@@ -35,10 +18,7 @@
     }
 
     * { box-sizing: border-box; }
-<footer class="scientific-footer">
-  Hệ thống tuân thủ khuyến cáo ESC 2023 và ACC/AHA 2024. 
-  AI được thiết kế như công cụ hỗ trợ quyết định lâm sàng, không thay thế bác sĩ.
-</footer>
+
     body {
       margin: 0;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -210,11 +190,30 @@
       color: #111827;
     }
 
+    /* Ghi chú khoa học & footer khoa học */
+    .scientific-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
     footer {
       text-align: center;
       font-size: 11px;
       color: #9ca3af;
       padding: 16px 0 24px;
+    }
+
+    .scientific-footer {
+      margin-top: 30px;
+      font-size: 11px;
+      text-align: center;
+      color: #6b7280;
+      padding: 10px 0 24px;
+      border-top: 1px solid #e5e7eb;
+      background: #f9fafb;
+      font-style: italic;
     }
   </style>
 </head>
@@ -357,10 +356,11 @@
   <!-- STEP 4 -->
   <div class="card hidden" id="step4">
     <h2>Bước 4. Kết quả AI</h2>
-      <p class="scientific-note">
-    Hệ thống dựa trên khuyến cáo ESC 2023, ACC/AHA 2024 và công cụ lâm sàng HEAR score đã được kiểm chứng.
-    Công cụ chỉ hỗ trợ bác sĩ trong phân tầng nguy cơ, không thay thế chẩn đoán và điều trị.
-  </p>
+
+    <p class="scientific-note">
+      Hệ thống dựa trên khuyến cáo ESC 2023, ACC/AHA 2024 và công cụ lâm sàng HEAR score đã được kiểm chứng.
+      Công cụ chỉ hỗ trợ bác sĩ trong phân tầng nguy cơ, không thay thế chẩn đoán và điều trị.
+    </p>
 
     <div id="resultRiskCard"></div>
 
@@ -378,8 +378,9 @@
 
 </div>
 
-<footer>
-  Demo minh họa. Không thay thế chẩn đoán của bác sĩ.
+<footer class="scientific-footer">
+  Hệ thống tuân thủ khuyến cáo ESC 2023 và ACC/AHA 2024.
+  AI được thiết kế như công cụ hỗ trợ quyết định lâm sàng, không thay thế bác sĩ trong chẩn đoán và điều trị.
 </footer>
 
 </body>
