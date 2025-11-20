@@ -7,12 +7,6 @@
   <script defer src="app.js"></script>
 
   <style>
-    .scientific-note {
-  font-size: 11px;
-  color: #6b7280;
-  margin-bottom: 10px;
-  font-style: italic;
-}
     :root {
       --primary: #1f4fbf;
       --bg: #f5f7fb;
@@ -243,6 +237,14 @@
       font-size: 13px;
     }
 
+    /* Ghi chú guideline */
+    .scientific-note {
+      font-size: 11px;
+      color: #6b7280;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+
     footer {
       text-align: center;
       padding: 16px 0 24px;
@@ -252,11 +254,62 @@
 
     /* MOBILE RESULT */
     @media (max-width: 640px) {
+      .container {
+        padding: 0 8px;
+        margin-top: 10px;
+      }
+      .card {
+        padding: 14px 12px 12px;
+        border-radius: 14px;
+      }
+      h2 {
+        font-size: 16px;
+        margin-bottom: 8px;
+      }
+      h3 {
+        font-size: 14px;
+      }
+      .stepper {
+        gap: 6px;
+        margin-bottom: 10px;
+      }
+      .step-pill {
+        padding: 4px 8px;
+        font-size: 11px;
+      }
+      .step-pill .badge {
+        width: 18px;
+        height: 18px;
+        font-size: 10px;
+      }
+      .row {
+        flex-direction: column;
+      }
+      .col-2,
+      .col-3 {
+        flex: 1 1 100%;
+        min-width: 100%;
+      }
       .result-layout {
         flex-direction: column;
       }
-      .recommend-box, .hear-card {
+      .recommend-box,
+      .hear-card {
         flex: 1 1 100%;
+      }
+      .buttons {
+        flex-direction: column-reverse;
+        align-items: stretch;
+        gap: 6px;
+      }
+      .buttons button {
+        width: 100%;
+        text-align: center;
+        padding: 9px 14px;
+        font-size: 13px;
+      }
+      .scientific-note {
+        font-size: 10px;
       }
     }
   </style>
@@ -355,7 +408,6 @@
     <h2>Bước 2. Tải ảnh ECG</h2>
 
     <input type="file" id="ecgFile" accept="image/*">
-
     <div class="preview-ecg" id="ecgPreview">Chưa có ảnh ECG.</div>
 
     <div class="ai-ecg-panel">
@@ -407,10 +459,12 @@
   <!-- ==== STEP 4 ==== -->
   <div class="card hidden" id="step4">
     <h2>Bước 4. Kết quả AI</h2>
+
     <p class="scientific-note">
-    Hệ thống dựa trên khuyến cáo ESC 2023, ACC/AHA 2024 và công cụ lâm sàng HEAR score đã được kiểm chứng.
-    Công cụ chỉ hỗ trợ bác sĩ trong phân tầng nguy cơ, không thay thế chẩn đoán và điều trị.
-  </p>
+      Hệ thống dựa trên khuyến cáo ESC 2023, ACC/AHA 2024 và công cụ lâm sàng HEAR score đã được kiểm chứng.
+      Công cụ chỉ hỗ trợ bác sĩ trong phân tầng nguy cơ, không thay thế chẩn đoán và điều trị.
+    </p>
+
     <div id="resultRiskCard"></div>
 
     <div class="result-layout">
