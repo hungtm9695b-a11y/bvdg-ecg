@@ -226,19 +226,41 @@ function calculateAndShowResult() {
 }
 
 function resetForm() {
-  document.querySelectorAll("input,select").forEach(el=>{
-    if (el.type==="checkbox") el.checked=false;
-    else if (el.tagName==="SELECT") el.selectedIndex=0;
-    else el.value="";
+  // Xoá tất cả input, checkbox, select
+  document.querySelectorAll("input,select").forEach(el => {
+    if (el.type === "checkbox") {
+      el.checked = false;
+    } else if (el.tagName === "SELECT") {
+      el.selectedIndex = 0;
+    } else if (el.id !== "ecgIschemia" && el.id !== "ecgDangerousRhythm" && el.id !== "ecgOtherAbnormal") {
+      // 3 hidden này sẽ set lại phía dưới
+      el.value = "";
+    }
   });
 
-  document.getElementById("ecgPreview").innerHTML="Chưa có ảnh ECG.";
-  document.getElementById("ecgStatus").textContent="Chưa phân tích.";
-  document.getElementById("ecgTextSummary").textContent="Chưa có kết luận.";
+  // Reset các hidden ECG
+  document.getElementById("ecgIschemia").value = "";
+  document.getElementById("ecgDangerousRhythm").value = "";
+  document.getElementById("ecgOtherAbnormal").value = "";
 
-  document.getElementById("resultRiskCard").innerHTML="";
-  document.getElementById("recommendationList").innerHTML="";
-  document.getElementById("hearSummary").innerHTML="";
+  // Reset hiển thị ECG
+  document.getElementById("ecgPreview").innerHTML = "Chưa có ảnh ECG.";
+  document.getElementById("ecgStatus").textContent = "Chưa phân tích.";
+  document.getElementById("ecgTextSummary").textContent = "Chưa có kết luận.";
 
+  // Xoá kết quả AI
+  document.getElementById("resultRiskCard").innerHTML = "";
+  const recBox = document.getElementById("recommendationBox");
+  if (recBox) {
+    recBox.className = "recommend-box";
+    recBox.innerHTML = "";
+  }
+  const hearDiv = document.getElementById("hearSummary");
+  if (hearDiv) {
+    hearDiv.className = "hear-card";
+    hearDiv.innerHTML = "";
+  }
+
+  // Quay lại bước 1
   goToStep(1);
 }
